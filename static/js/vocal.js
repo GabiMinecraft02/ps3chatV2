@@ -1,33 +1,17 @@
+// vocal.js
 (() => {
     const micBtn = document.getElementById("mic-Btn");
     const muteBtn = document.getElementById("mute-btn");
     const micSelect = document.getElementById("micSelect");
-
-    const pc = new RTCPeerConnection({
-        iceServers: [{ urls: "stun:stun.l.google.com:19302" }]
-    });
+    const peers = {}; // username => RTCPeerConnection
 
     let localStream = null;
-    let audioTrack = null;
-
-    const remoteAudio = document.createElement("audio");
-    remoteAudio.autoplay = true;
-    document.body.appendChild(remoteAudio);
 
     async function startMicro(deviceId = null) {
-        if (localStream) {
-            localStream.getTracks().forEach(t => t.stop());
-        }
+        if (localStream) localStream.getTracks().forEach(t => t.stop());
 
-        const constraints = {
-            audio: deviceId ? { deviceId: { exact: deviceId } } : true
-        };
-
+        const constraints = { audio: deviceId ? { deviceId: { exact: deviceId } } : true };
         localStream = await navigator.mediaDevices.getUserMedia(constraints);
-        audioTrack = localStream.getAudioTracks()[0];
-
-        pc.getSenders().forEach(s => pc.removeTrack(s));
-        pc.addTrack(audioTrack, localStream);
 
         const devices = await navigator.mediaDevices.enumerateDevices();
         micSelect.innerHTML = "";
@@ -39,72 +23,79 @@
         });
     }
 
-    async function startWebRTC() {
-        pc.ontrack = e => {
-            remoteAudio.srcObject = e.streams[0];
-        };
+    async function connectToPeers() {
+        const res = await fetch("/webrtc/offers");
+        const offers = await res.json();
 
-        pc.onicecandidate = e => {
-            if (e.candidate) {
-                fetch("/webrtc/candidate", {
+        for (const [username, offer] of Object.entries(offers)) {
+            if (username === USERNAME) continue;
+
+            const pc = new RTCPeerConnection({ iceServers: [{ urls: "stun:stun.l.google.com:19302" }] });
+            peers[username] = pc;
+
+            localStream.getTracks().forEach(track => pc.addTrack(track, localStream));
+
+            pc.ontrack = e => {
+                let audio = document.getElementById(`audio-${username}`);
+                if (!audio) {
+                    audio = document.createElement("audio");
+                    audio.id = `audio-${username}`;
+                    audio.autoplay = true;
+                    document.body.appendChild(audio);
+                }
+                audio.srcObject = e.streams[0];
+            };
+
+            pc.onicecandidate = e => {
+                if (e.candidate) fetch("/webrtc/candidate", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify(e.candidate)
+                    body: JSON.stringify({ to: username, candidate: e.candidate })
                 });
-            }
-        };
+            };
 
-        const offersRes = await fetch("/webrtc/offers");
-        const offers = await offersRes.json();
-
-        if (!offers || Object.keys(offers).length === 0) {
-            // Host
-            const offer = await pc.createOffer();
-            await pc.setLocalDescription(offer);
-            await fetch("/webrtc/offer", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(offer)
-            });
-        } else {
-            // Client
-            const hostOffer = Object.values(offers)[0];
-            await pc.setRemoteDescription(hostOffer);
-
+            await pc.setRemoteDescription(offer);
             const answer = await pc.createAnswer();
             await pc.setLocalDescription(answer);
+
             await fetch("/webrtc/answer", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(answer)
+                body: JSON.stringify({ to: username, answer })
             });
         }
+    }
 
-        // Récupération ICE une seule fois
-        setTimeout(async () => {
-            const res = await fetch("/webrtc/candidates");
-            const cands = await res.json();
-            for (const c of cands) {
-                try { await pc.addIceCandidate(c); } catch {}
+    async function pollCandidates() {
+        const res = await fetch("/webrtc/candidates");
+        const cands = await res.json();
+        for (const c of cands) {
+            const pc = peers[c.to];
+            if (pc) {
+                try { await pc.addIceCandidate(c.candidate); } catch {}
             }
-        }, 1500);
+        }
+        setTimeout(pollCandidates, 1000);
     }
 
     micBtn.addEventListener("click", async () => {
         if (!localStream) {
             await startMicro();
-            await startWebRTC();
+            await connectToPeers();
+            pollCandidates();
             micBtn.textContent = "Désactiver micro";
         } else {
-            audioTrack.enabled = !audioTrack.enabled;
-            micBtn.textContent = audioTrack.enabled ? "Désactiver micro" : "Activer micro";
+            const track = localStream.getAudioTracks()[0];
+            track.enabled = !track.enabled;
+            micBtn.textContent = track.enabled ? "Désactiver micro" : "Activer micro";
         }
     });
 
     muteBtn.addEventListener("click", () => {
-        if (!audioTrack) return;
-        audioTrack.enabled = !audioTrack.enabled;
-        muteBtn.textContent = audioTrack.enabled ? "Mute" : "Unmute";
+        if (!localStream) return;
+        const track = localStream.getAudioTracks()[0];
+        track.enabled = !track.enabled;
+        muteBtn.textContent = track.enabled ? "Mute" : "Unmute";
     });
 
     micSelect.addEventListener("change", async () => {
