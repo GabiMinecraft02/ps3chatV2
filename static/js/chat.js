@@ -1,21 +1,33 @@
-const supabaseUrl = "TON_SUPABASE_URL";
-const supabaseKey = "TON_SUPABASE_KEY";
-const supabase = supabase.createClient(supabaseUrl, supabaseKey);
-
 const chatForm = document.getElementById("chat-form");
 const chatInput = document.getElementById("chat-input");
 const chatBox = document.getElementById("chat-box");
 
+// Fonction pour récupérer messages
+async function fetchMessages() {
+    const res = await fetch("/get_messages");
+    const messages = await res.json();
+    chatBox.innerHTML = "";
+    messages.forEach(msg => {
+        const div = document.createElement("div");
+        div.textContent = `${msg.username}: ${msg.content}`;
+        chatBox.appendChild(div);
+    });
+}
+
+// Envoyer un message
 chatForm.addEventListener("submit", async (e) => {
     e.preventDefault();
-    if(!chatInput.value) return;
-    await supabase.from("messages").insert([{ username: USERNAME, content: chatInput.value }]);
+    const content = chatInput.value.trim();
+    if (!content) return;
+    await fetch("/send_message", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ content })
+    });
     chatInput.value = "";
+    fetchMessages();
 });
 
-supabase.from("messages").on("INSERT", payload => {
-    const msg = payload.new;
-    const el = document.createElement("div");
-    el.textContent = `${msg.username}: ${msg.content}`;
-    chatBox.appendChild(el);
-}).subscribe();
+// Refresh messages toutes les 2 secondes (simple polling)
+setInterval(fetchMessages, 2000);
+fetchMessages();
