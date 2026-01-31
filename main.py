@@ -1,17 +1,18 @@
-from flask import Flask, render_template, request, redirect, session, url_for, jsonify
+from flask import Flask, render_template, request, redirect, session, url_for
 import os
 from supabase import create_client
 
-# Flask setup
 app = Flask(__name__)
 app.secret_key = os.environ.get("FLASK_SECRET_KEY", "supersecretkey")
 
-# Supabase setup depuis variables d'environnement
+# Supabase
 SUPABASE_URL = os.environ.get("SUPABASE_URL")
 SUPABASE_KEY = os.environ.get("SUPABASE_KEY")
 supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
 
-# Routes
+# Mot de passe global
+GLOBAL_PASSWORD = os.environ.get("PASSWORD")
+
 @app.route("/", methods=["GET"])
 def home():
     return redirect(url_for("login"))
@@ -21,41 +22,20 @@ def login():
     if request.method == "POST":
         username = request.form.get("username")
         password = request.form.get("password")
-        # Pour simplifier, on ne vérifie pas le mot de passe
+        if not username:
+            return render_template("login.html", error="Pseudo requis")
+        if password != GLOBAL_PASSWORD:
+            return render_template("login.html", error="Mot de passe incorrect")
         session["username"] = username
         return redirect(url_for("chat"))
     return render_template("login.html")
 
-@app.route("/chat", methods=["GET"])
+@app.route("/chat")
 def chat():
     if "username" not in session:
         return redirect(url_for("login"))
     return render_template("index.html", username=session["username"])
 
-# Route sécurisée pour envoyer un message
-@app.route("/send_message", methods=["POST"])
-def send_message():
-    if "username" not in session:
-        return jsonify({"error": "Non connecté"}), 401
-    data = request.json
-    content = data.get("content")
-    if not content:
-        return jsonify({"error": "Message vide"}), 400
-    supabase.table("messages").insert([{
-        "username": session["username"],
-        "content": content
-    }]).execute()
-    return jsonify({"success": True})
-
-# Route pour récupérer messages récents
-@app.route("/get_messages", methods=["GET"])
-def get_messages():
-    if "username" not in session:
-        return jsonify([]), 401
-    messages = supabase.table("messages").select("*").order("created_at").execute().data
-    return jsonify(messages)
-
-# Vocal page
 @app.route("/vocal")
 def vocal():
     if "username" not in session:
