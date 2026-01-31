@@ -3,17 +3,30 @@ const chatInput = document.getElementById("chat-input");
 const chatBox = document.getElementById("chat-box");
 const usersList = document.getElementById("users-list");
 
+// Fonction pour afficher un message dans le chat
+function addMessage(username, content) {
+    const div = document.createElement("div");
+    div.textContent = `${username}: ${content}`;
+    chatBox.appendChild(div);
+    chatBox.scrollTop = chatBox.scrollHeight;
+}
+
 // Envoyer un message
 chatForm.addEventListener("submit", async (e) => {
     e.preventDefault();
     const content = chatInput.value.trim();
     if (!content) return;
+
+    // Affiche immédiatement le message envoyé
+    addMessage(USERNAME, content);
+    chatInput.value = "";
+
+    // Puis envoie au serveur
     await fetch("/send_message", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ content })
     });
-    chatInput.value = "";
 });
 
 // Récupérer messages
@@ -23,11 +36,8 @@ async function fetchMessages() {
     const messages = await res.json();
     chatBox.innerHTML = "";
     messages.forEach(msg => {
-        const div = document.createElement("div");
-        div.textContent = `${msg.username}: ${msg.content}`;
-        chatBox.appendChild(div);
+        addMessage(msg.username, msg.content);
     });
-    chatBox.scrollTop = chatBox.scrollHeight;
 }
 
 // Récupérer utilisateurs connectés
@@ -43,8 +53,8 @@ async function fetchUsers() {
     });
 }
 
-// Refresh toutes les 2 secondes
-setInterval(fetchMessages, 2000);
-setInterval(fetchUsers, 2000);
+// Refresh des messages et utilisateurs toutes les 1 seconde
+setInterval(fetchMessages, 500);   // plutôt que 2000ms
+setInterval(fetchUsers,1000);
 fetchMessages();
 fetchUsers();
