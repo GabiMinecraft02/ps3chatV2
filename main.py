@@ -3,7 +3,7 @@ import os
 from supabase import create_client
 
 app = Flask(__name__)
-app.secret_key = os.environ.get("FLASK_SECRET_KEY", "supersecretkey")
+app.secret_key = os.environ.get("FLASK_SECRET_KEY")
 
 # Supabase
 SUPABASE_URL = os.environ.get("SUPABASE_URL")
