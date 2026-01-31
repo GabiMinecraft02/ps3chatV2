@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Ps3ChatV2.0 - Vocal</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <h1>Vocal - {{ username }}</h1>
+    <audio id="localAudio" autoplay muted></audio>
+    <div id="peers"></div>
+    <button id="mute-btn">Mute</button>
+
+    <script>
+        const USERNAME = "{{ username }}";
+    </script>
+    <script src="{{ url_for('static', filename='js/vocal.js') }}"></script>
+</body>
+</html>
