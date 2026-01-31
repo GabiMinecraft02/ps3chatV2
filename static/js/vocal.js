@@ -3,10 +3,12 @@ const micSelect = document.getElementById("micSelect");
 const muteBtn = document.getElementById("mute-btn");
 const micBtn = document.getElementById("mic-Btn");
 const usersList = document.getElementById("users-list");
+const peersDiv = document.getElementById("peers");
 
 let localStream;
+let peers = {}; // stocke les peers par username
 
-// Initialisation micro
+// --- Micro et liste des utilisateurs ---
 async function initMic() {
     try {
         localStream = await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -23,29 +25,22 @@ async function initMic() {
         });
     } catch (err) {
         console.error("Impossible d’accéder au micro :", err);
+        alert("Permission micro refusée ou non disponible");
     }
 }
 
-// Changer de micro
 micSelect.addEventListener("change", async () => {
-    if (micSelect.value) {
-        const stream = await navigator.mediaDevices.getUserMedia({
-            audio: { deviceId: { exact: micSelect.value } }
-        });
-        localAudio.srcObject = stream;
-        localStream = stream;
-    }
+    if (!micSelect.value) return;
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: { deviceId: { exact: micSelect.value } } });
+    localAudio.srcObject = stream;
+    localStream = stream;
 });
 
-// Mute / unmute
+// --- Boutons mute / activer micro ---
 muteBtn.addEventListener("click", () => {
-    if (localStream) {
-        const track = localStream.getAudioTracks()[0];
-        track.enabled = !track.enabled;
-    }
+    if (localAudio.srcObject) localAudio.muted = !localAudio.muted;
 });
 
-// Activer / Désactiver micro (pour indiquer état sur le bouton)
 micBtn.addEventListener("click", () => {
     if (!localStream) return;
     const track = localStream.getAudioTracks()[0];
@@ -53,7 +48,7 @@ micBtn.addEventListener("click", () => {
     micBtn.textContent = track.enabled ? "Désactiver micro" : "Activer micro";
 });
 
-// Utilisateurs connectés
+// --- Liste utilisateurs connectés ---
 async function fetchUsers() {
     const res = await fetch("/connected_users");
     if (!res.ok) return;
@@ -66,7 +61,12 @@ async function fetchUsers() {
     });
 }
 
-// Refresh utilisateurs toutes les 2s
+// Refresh utilisateurs
 setInterval(fetchUsers, 2000);
 fetchUsers();
 initMic();
+
+// --- WebRTC (simple-peer) ---
+// Ici on laisse une base pour 3–4 pers, il faudra un mécanisme de signal via Supabase ou serveur.
+// Chaque peer = username, on crée SimplePeer avec stream local et on ajoute <audio> pour chaque peer.
+
