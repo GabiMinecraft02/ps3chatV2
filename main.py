@@ -13,14 +13,11 @@ supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
 # Mot de passe global
 GLOBAL_PASSWORD = os.environ.get("PASSWORD")
 
-# Utilisateurs connectés en mémoire
+# Utilisateurs connectés
 connected_users = set()
-
-# --- Routes ---
 
 @app.before_request
 def track_user():
-    """Ajouter l'utilisateur connecté à la liste"""
     if "username" in session:
         connected_users.add(session["username"])
 
@@ -62,7 +59,6 @@ def vocal():
     return render_template("vocal.html", username=session["username"])
 
 # --- Chat routes ---
-
 @app.route("/send_message", methods=["POST"])
 def send_message():
     if "username" not in session:
@@ -85,18 +81,13 @@ def get_messages():
     return jsonify(messages)
 
 # --- Utilisateurs connectés ---
-
 @app.route("/connected_users")
 def get_connected_users():
     if "username" not in session:
         return jsonify([]), 401
     return jsonify(list(connected_users))
 
-# --- Cleanup à la déconnexion/fermeture du navigateur (optionnel) ---
-# Note : impossible de détecter fermeture sur Render, donc la mise à jour de connected_users se fait sur login/logout
-
 # --- Run ---
-
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port, debug=True)
