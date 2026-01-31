@@ -44,6 +44,14 @@ muteBtn.addEventListener("click", () => {
     }
 });
 
+// Activer / désactiver le micro
+micBtn.addEventListener("click", () => {
+    if (!localStream) return;
+    const track = localStream.getAudioTracks()[0];
+    track.enabled = !track.enabled;
+    micBtn.textContent = track.enabled ? "Désactiver micro" : "Activer micro";
+});
+
 // Utilisateurs connectés
 async function fetchUsers() {
     const res = await fetch("/connected_users");
@@ -61,3 +69,4 @@ async function fetchUsers() {
 setInterval(fetchUsers, 2000);
 fetchUsers();
 initMic();
+
