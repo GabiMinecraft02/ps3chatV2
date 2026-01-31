@@ -27,6 +27,17 @@
             <a href="/chat"><button>Quitter le vocal</button></a>
         </div>
 
+        <!-- Mini Chat dans vocal -->
+        <div id="mini-chat" style="margin-top:20px;">
+    <h4>Derniers messages</h4>
+    <!-- On utilise les mêmes IDs que chat.js pour que ça fonctionne -->
+    <div id="chat-box" style="height:150px; overflow-y:scroll; border:1px solid #555; padding:5px; background-color:#222; color:#fff;"></div>
+    <form id="chat-form" style="display:flex; gap:5px; margin-top:5px;">
+        <input type="text" id="chat-input" placeholder="Message..." style="flex:1; padding:5px; background-color:#333; color:#fff; border-radius:3px; border:1px solid #555;">
+        <button type="submit" style="padding:5px 10px;">Envoyer</button>
+    </form>
+    </div>
+
         <h3>Flux audio des autres</h3>
         <div id="peers"></div>
         <audio id="localAudio" autoplay muted style="margin-top:10px;"></audio>
