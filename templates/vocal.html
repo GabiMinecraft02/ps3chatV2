@@ -1,15 +1,24 @@
 <!DOCTYPE html>
-<html>
+<html lang="fr">
 <head>
+    <meta charset="UTF-8">
     <title>Ps3ChatV2.0 - Vocal</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 <body>
     <h1>Vocal - {{ username }}</h1>
+
+    <!-- Choix du micro -->
+    <label for="micSelect">Choisir un micro :</label>
+    <select id="micSelect"></select>
+
+    <!-- Audio local -->
     <audio id="localAudio" autoplay muted></audio>
-    <div id="peers"></div>
+
+    <!-- Bouton mute -->
     <button id="mute-btn">Mute</button>
 
+    <!-- Script pour gérer micro, mute et WebRTC -->
     <script>
         const USERNAME = "{{ username }}";
     </script>
