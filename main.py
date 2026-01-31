@@ -1,9 +1,9 @@
-from flask import Flask, render_template, request, redirect, session, url_for
+from flask import Flask, render_template, request, redirect, session, url_for, jsonify
 import os
 from supabase import create_client
 
 app = Flask(__name__)
-app.secret_key = os.environ.get("FLASK_SECRET_KEY")
+app.secret_key = os.environ.get("FLASK_SECRET_KEY", "supersecretkey")
 
 # Supabase
 SUPABASE_URL = os.environ.get("SUPABASE_URL")
@@ -12,6 +12,17 @@ supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
 
 # Mot de passe global
 GLOBAL_PASSWORD = os.environ.get("PASSWORD")
+
+# Utilisateurs connectés en mémoire
+connected_users = set()
+
+# --- Routes ---
+
+@app.before_request
+def track_user():
+    """Ajouter l'utilisateur connecté à la liste"""
+    if "username" in session:
+        connected_users.add(session["username"])
 
 @app.route("/", methods=["GET"])
 def home():
@@ -27,8 +38,16 @@ def login():
         if password != GLOBAL_PASSWORD:
             return render_template("login.html", error="Mot de passe incorrect")
         session["username"] = username
+        connected_users.add(username)
         return redirect(url_for("chat"))
     return render_template("login.html")
+
+@app.route("/logout")
+def logout():
+    username = session.pop("username", None)
+    if username and username in connected_users:
+        connected_users.remove(username)
+    return redirect(url_for("login"))
 
 @app.route("/chat")
 def chat():
@@ -42,6 +61,22 @@ def vocal():
         return redirect(url_for("login"))
     return render_template("vocal.html", username=session["username"])
 
+# --- Chat routes ---
+
+@app.route("/send_message", methods=["POST"])
+def send_message():
+    if "username" not in session:
+        return jsonify({"error": "Non connecté"}), 401
+    data = request.json
+    content = data.get("content")
+    if not content:
+        return jsonify({"error": "Message vide"}), 400
+    supabase.table("messages").insert([{
+        "username": session["username"],
+        "content": content
+    }]).execute()
+    return jsonify({"success": True})
+
 @app.route("/get_messages", methods=["GET"])
 def get_messages():
     if "username" not in session:
@@ -49,6 +84,18 @@ def get_messages():
     messages = supabase.table("messages").select("*").order("created_at").execute().data
     return jsonify(messages)
 
+# --- Utilisateurs connectés ---
+
+@app.route("/connected_users")
+def get_connected_users():
+    if "username" not in session:
+        return jsonify([]), 401
+    return jsonify(list(connected_users))
+
+# --- Cleanup à la déconnexion/fermeture du navigateur (optionnel) ---
+# Note : impossible de détecter fermeture sur Render, donc la mise à jour de connected_users se fait sur login/logout
+
+# --- Run ---
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
