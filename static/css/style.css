@@ -1,78 +1,100 @@
-body {
-    font-family: Arial, sans-serif;
-    background: #222;          /* fond global sombre */
-    color: #fff;               /* texte clair par défaut */
-    text-align: center;
-    margin: 0;
-    padding: 0;
+/* Container principal */
+.container {
+    display: flex;
+    gap: 15px;
+    align-items: flex-start;
 }
 
-/* Boîte de connexion centrée */
-.login-box {
-    margin: 100px auto;
-    width: 300px;
-    background-color: #1c1c1c; /* un peu plus sombre que le body */
-    padding: 30px;
-    border-radius: 12px;
-    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.6);
-}
-
-/* Inputs et boutons */
-input, button {
-    display: block;
-    margin: 10px auto;
-    padding: 10px;
-    width: 80%;
-    border: none;
-    border-radius: 5px;
-}
-
-input {
-    background-color: #333;
-    color: #fff;
-}
-
-button {
-    background-color: #1e90ff;
-    color: #fff;
-    cursor: pointer;
-    transition: background 0.3s;
-}
-
-button:hover {
-    background-color: #0d6efd;
+/* Chat */
+.chat-column {
+    flex: 8;
+    display: flex;
+    flex-direction: column;
 }
 
 /* Chat-box */
 #chat-box {
-    height: 300px;
+    flex: 1;
+    min-height: 400px;
     overflow-y: scroll;
     border: 1px solid #555;
     padding: 10px;
-    margin: 20px auto;
-    width: 50%;
-    background-color: #1a1a1a;
-    border-radius: 8px;
+    background-color: #222; /* sombre */
+    color: #fff;
+    border-radius: 5px;
 }
 
-/* Section sombre améliorée */
-.section-sombre {
-    background: linear-gradient(145deg, #1e1e1e, #2a2a2a); /* dégradé subtil */
-    color: #ffffff;
-    padding: 40px;
-    border-radius: 10px;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.6);
-    max-width: 800px;
-    margin: 40px auto;
-    text-align: left; /* plus lisible pour les sections de texte */
+/* Formulaire chat */
+#chat-form {
+    margin-top: 5px;
+    display: flex;
+    gap: 5px;
 }
 
-/* Liens dans section sombre */
-.section-sombre a {
-    color: #1e90ff;
-    text-decoration: none;
+#chat-input {
+    flex: 1;
+    padding: 10px;
+    border-radius: 5px;
+    border: 1px solid #555;
+    background-color: #333;
+    color: #fff;
 }
 
-.section-sombre a:hover {
-    text-decoration: underline;
+#chat-form button {
+    padding: 10px 20px;
+    border-radius: 5px;
+    border: none;
+    background-color: #444;
+    color: #fff;
+    cursor: pointer;
+}
+
+#chat-form button:hover {
+    background-color: #666;
+}
+
+/* Bouton rejoindre vocal */
+.vocal-btn {
+    text-align: right;
+    margin-top: 10px;
+}
+
+.vocal-btn button {
+    padding: 10px 20px;
+    border-radius: 5px;
+    border: none;
+    background-color: #555;
+    color: #fff;
+    cursor: pointer;
+}
+
+.vocal-btn button:hover {
+    background-color: #777;
+}
+
+/* Utilisateurs connectés */
+.users-column {
+    flex: 2;
+    background-color: #333; /* carré sombre */
+    color: #fff;
+    padding: 10px;
+    border-radius: 5px;
+    max-height: 500px;
+    overflow-y: auto;
+}
+
+.users-column h3 {
+    margin-top: 0;
+    text-align: center;
+}
+
+.users-column ul {
+    list-style: none;
+    padding-left: 0;
+    margin: 0;
+}
+
+.users-column ul li {
+    padding: 5px;
+    border-bottom: 1px solid #555;
 }
