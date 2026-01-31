@@ -9,31 +9,29 @@
     <h1>Ps3ChatV2.0 - Chat</h1>
     <p>Connecté en tant que : {{ username }} | <a href="/logout">Déconnexion</a></p>
 
-    <div style="display:flex; gap:20px; align-items:flex-start;">
-
+    <div class="container">
         <!-- Chat -->
-        <div style="flex:8; display:flex; flex-direction:column;">
+        <div class="chat-column">
             <h3>Messages</h3>
-            <div id="chat-box" style="flex:1; overflow-y:scroll; border:1px solid #555; padding:10px; min-height:400px;"></div>
-            
-            <!-- Formulaire avec input et bouton alignés -->
-            <form id="chat-form" style="margin-top:5px; display:flex; gap:5px;">
-                <input type="text" id="chat-input" placeholder="Message..." style="flex:1; padding:10px;">
-                <button type="submit" style="padding:10px 20px;">Envoyer</button>
+            <div id="chat-box"></div>
+
+            <!-- Formulaire -->
+            <form id="chat-form">
+                <input type="text" id="chat-input" placeholder="Message...">
+                <button type="submit">Envoyer</button>
             </form>
 
-            <!-- Bouton rejoindre vocal aligné à droite -->
-            <div style="text-align:right; margin-top:10px;">
-                <button onclick="window.location.href='/vocal'" style="padding:10px 20px;">Rejoindre vocal</button>
+            <!-- Bouton rejoindre vocal -->
+            <div class="vocal-btn">
+                <button onclick="window.location.href='/vocal'">Rejoindre vocal</button>
             </div>
         </div>
 
         <!-- Utilisateurs connectés -->
-        <section style="flex:1; margin-left: 10px; padding: 10px; border-left: 2px solid #555;">
+        <section class="users-column">
             <h3>Connectés</h3>
-            <ul id="users-list" style="margin-top:0; padding-left:0; list-style:none;"></ul>
+            <ul id="users-list"></ul>
         </section>
-
     </div>
 
     <script>
@@ -42,3 +40,4 @@
     <script src="{{ url_for('static', filename='js/chat.js') }}"></script>
 </body>
 </html>
+
