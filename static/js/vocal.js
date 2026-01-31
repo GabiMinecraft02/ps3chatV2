@@ -1,72 +1,78 @@
-const localAudio = document.getElementById("localAudio");
-const micSelect = document.getElementById("micSelect");
-const muteBtn = document.getElementById("mute-btn");
-const micBtn = document.getElementById("mic-Btn");
-const usersList = document.getElementById("users-list");
-const peersDiv = document.getElementById("peers");
+(() => {
+    // --- Variables globales ---
+    const chatBox = document.getElementById("chat-box");
+    const chatForm = document.getElementById("chat-form");
+    const chatInput = document.getElementById("chat-input");
+    const usersList = document.getElementById("users-list");
 
-let localStream;
-let peers = {}; // stocke les peers par username
+    // Vérifie que les éléments existent avant de continuer
+    if (!chatBox || !chatForm || !chatInput || !usersList) return;
 
-// --- Micro et liste des utilisateurs ---
-async function initMic() {
-    try {
-        localStream = await navigator.mediaDevices.getUserMedia({ audio: true });
-        localAudio.srcObject = localStream;
-
-        const devices = await navigator.mediaDevices.enumerateDevices();
-        const mics = devices.filter(d => d.kind === "audioinput");
-        micSelect.innerHTML = "";
-        mics.forEach((mic, index) => {
-            const option = document.createElement("option");
-            option.value = mic.deviceId;
-            option.textContent = mic.label || `Micro ${index+1}`;
-            micSelect.appendChild(option);
-        });
-    } catch (err) {
-        console.error("Impossible d’accéder au micro :", err);
-        alert("Permission micro refusée ou non disponible");
+    // --- Fonction pour ajouter un message dans le chat ---
+    function addMessage(username, content) {
+        const div = document.createElement("div");
+        div.textContent = `${username}: ${content}`;
+        chatBox.appendChild(div);
+        chatBox.scrollTop = chatBox.scrollHeight;
     }
-}
 
-micSelect.addEventListener("change", async () => {
-    if (!micSelect.value) return;
-    const stream = await navigator.mediaDevices.getUserMedia({ audio: { deviceId: { exact: micSelect.value } } });
-    localAudio.srcObject = stream;
-    localStream = stream;
-});
+    // --- Envoi de message ---
+    chatForm.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const content = chatInput.value.trim();
+        if (!content) return;
 
-// --- Boutons mute / activer micro ---
-muteBtn.addEventListener("click", () => {
-    if (localAudio.srcObject) localAudio.muted = !localAudio.muted;
-});
+        // Affiche immédiatement
+        addMessage(USERNAME, content);
+        chatInput.value = "";
 
-micBtn.addEventListener("click", () => {
-    if (!localStream) return;
-    const track = localStream.getAudioTracks()[0];
-    track.enabled = !track.enabled;
-    micBtn.textContent = track.enabled ? "Désactiver micro" : "Activer micro";
-});
-
-// --- Liste utilisateurs connectés ---
-async function fetchUsers() {
-    const res = await fetch("/connected_users");
-    if (!res.ok) return;
-    const users = await res.json();
-    usersList.innerHTML = "";
-    users.forEach(u => {
-        const li = document.createElement("li");
-        li.textContent = u;
-        usersList.appendChild(li);
+        // Envoi au serveur
+        try {
+            await fetch("/send_message", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ content })
+            });
+        } catch (err) {
+            console.error("Erreur en envoyant le message :", err);
+        }
     });
-}
 
-// Refresh utilisateurs
-setInterval(fetchUsers, 2000);
-fetchUsers();
-initMic();
+    // --- Récupération des messages depuis le serveur ---
+    async function fetchMessages() {
+        try {
+            const res = await fetch("/get_messages");
+            if (!res.ok) return;
+            const messages = await res.json();
+            chatBox.innerHTML = "";
+            messages.forEach(msg => addMessage(msg.username, msg.content));
+        } catch (err) {
+            console.error("Erreur en récupérant les messages :", err);
+        }
+    }
 
-// --- WebRTC (simple-peer) ---
-// Ici on laisse une base pour 3–4 pers, il faudra un mécanisme de signal via Supabase ou serveur.
-// Chaque peer = username, on crée SimplePeer avec stream local et on ajoute <audio> pour chaque peer.
+    // --- Récupération des utilisateurs connectés ---
+    async function fetchUsers() {
+        try {
+            const res = await fetch("/connected_users");
+            if (!res.ok) return;
+            const users = await res.json();
+            usersList.innerHTML = "";
+            users.forEach(u => {
+                const li = document.createElement("li");
+                li.textContent = u;
+                usersList.appendChild(li);
+            });
+        } catch (err) {
+            console.error("Erreur en récupérant les utilisateurs :", err);
+        }
+    }
 
+    // --- Rafraîchissement régulier ---
+    setInterval(fetchMessages, 500); // messages toutes les 0,5 s
+    setInterval(fetchUsers, 2000);   // utilisateurs toutes les 2 s
+
+    // --- Initialisation ---
+    fetchMessages();
+    fetchUsers();
+})();
