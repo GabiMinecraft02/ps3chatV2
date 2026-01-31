@@ -94,20 +94,18 @@ def webrtc_offer():
 def webrtc_offers():
     return jsonify(offers)
 
-@app.route("/webrtc/answer", methods=["POST"])
-def webrtc_answer():
-    if "username" not in session:
-        return "Non connecté", 403
+@app.route("/webrtc/candidate", methods=["POST"])
+def webrtc_candidate():
     data = request.get_json()
-    if not data:
-        return "Données manquantes", 400
-    global answers
-    answers[session["username"]] = data
+    if not data or "to" not in data or "candidate" not in data:
+        return "Bad request", 400
+    candidates.append(data)
     return jsonify(success=True)
 
-@app.route("/webrtc/answers")
-def webrtc_answers():
-    return jsonify(answers)
+@app.route("/webrtc/candidates")
+def webrtc_candidates():
+    return jsonify(candidates)
+
 
 @app.route("/webrtc/candidate", methods=["POST"])
 def webrtc_candidate():
