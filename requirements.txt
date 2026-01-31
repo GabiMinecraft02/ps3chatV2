@@ -1,4 +1,4 @@
-Flask==2.3.2
-flask_cors==3.1.0        # Pour WebRTC ou API cross-origin
-supabase==1.0.0          # Pour communiquer avec Supabase
-python-dotenv==1.0.0     # Lire .env ou config.json
+Flask
+flask_cors
+supabase
+python-dotenv
