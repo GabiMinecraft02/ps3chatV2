@@ -47,6 +47,34 @@ def logout():
     session.clear()
     return redirect("/login")
 
+@app.route("/webrtc/offer", methods=["POST"])
+def webrtc_offer():
+    offers[session["username"]] = request.json
+    return jsonify(success=True)
+
+@app.route("/webrtc/offers")
+def webrtc_offers():
+    return jsonify(offers)
+
+@app.route("/webrtc/answer", methods=["POST"])
+def webrtc_answer():
+    answers[session["username"]] = request.json
+    return jsonify(success=True)
+
+@app.route("/webrtc/answers")
+def webrtc_answers():
+    return jsonify(answers)
+
+@app.route("/webrtc/candidate", methods=["POST"])
+def webrtc_candidate():
+    candidates.append(request.json)
+    return jsonify(success=True)
+
+@app.route("/webrtc/candidates")
+def webrtc_candidates():
+    return jsonify(candidates)
+
+
 # -------- CHAT --------
 
 @app.route("/send_message", methods=["POST"])
