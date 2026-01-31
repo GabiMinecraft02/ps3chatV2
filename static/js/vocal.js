@@ -7,11 +7,9 @@
     remoteAudio.autoplay = true;
     document.body.appendChild(remoteAudio);
 
-    let localStream;
-
     async function start() {
-        localStream = await navigator.mediaDevices.getUserMedia({ audio: true });
-        localStream.getTracks().forEach(t => pc.addTrack(t, localStream));
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        stream.getTracks().forEach(t => pc.addTrack(t, stream));
 
         pc.ontrack = e => {
             remoteAudio.srcObject = e.streams[0];
@@ -27,38 +25,44 @@
             }
         };
 
-        const offer = await pc.createOffer();
-        await pc.setLocalDescription(offer);
+        // Vérifie s'il existe déjà une offer
+        const offersRes = await fetch("/webrtc/offers");
+        const offers = await offersRes.json();
 
-        await fetch("/webrtc/offer", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(offer)
-        });
+        if (!offers || Object.keys(offers).length === 0) {
+            // 🧠 JE SUIS LE PREMIER → HOST
+            const offer = await pc.createOffer();
+            await pc.setLocalDescription(offer);
 
-        // récupération des answers
-        setInterval(async () => {
-            const res = await fetch("/webrtc/answers");
-            const answers = await res.json();
-            for (const a of Object.values(answers)) {
-                if (!pc.currentRemoteDescription) {
-                    await pc.setRemoteDescription(a);
-                }
-            }
-        }, 1000);
+            await fetch("/webrtc/offer", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(offer)
+            });
+        } else {
+            // 👤 JE REJOINS → CLIENT
+            const hostOffer = Object.values(offers)[0];
+            await pc.setRemoteDescription(hostOffer);
 
-        // récupération des candidates
-        setInterval(async () => {
+            const answer = await pc.createAnswer();
+            await pc.setLocalDescription(answer);
+
+            await fetch("/webrtc/answer", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(answer)
+            });
+        }
+
+        // ICE candidates (UNE FOIS)
+        setTimeout(async () => {
             const res = await fetch("/webrtc/candidates");
             const cands = await res.json();
             for (const c of cands) {
-                try {
-                    await pc.addIceCandidate(c);
-                } catch {}
+                try { await pc.addIceCandidate(c); } catch {}
             }
-        }, 1000);
+        }, 1500);
     }
 
     start();
 })();
-
