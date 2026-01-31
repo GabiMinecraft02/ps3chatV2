@@ -11,6 +11,9 @@ supabase = create_client(
 )
 
 connected_users = set()
+offers = {}
+answers = {}
+candidates = []
 
 @app.route("/")
 def home():
