@@ -11,7 +11,7 @@ supabase = create_client(
 )
 
 connected_users = set()
-offers = {}
+offers = None
 answers = {}
 candidates = []
 
