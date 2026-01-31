@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Mini Discord - Chat</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <h1>Bienvenue {{ username }}</h1>
+    <div id="chat-box">
+        {% for msg in messages %}
+            <div>{{ msg.username }}: {{ msg.content }}</div>
+        {% endfor %}
+    </div>
+    <form id="chat-form">
+        <input type="text" id="chat-input" placeholder="Message...">
+        <button type="submit">Envoyer</button>
+    </form>
+    <button onclick="window.location.href='/vocal'">Rejoindre vocal</button>
+
+    <script>
+        const USERNAME = "{{ username }}";
+    </script>
+    <script src="{{ url_for('static', filename='js/chat.js') }}"></script>
+</body>
+</html>
