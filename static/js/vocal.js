@@ -29,17 +29,14 @@
         pc.getSenders().forEach(s => pc.removeTrack(s));
         pc.addTrack(audioTrack, localStream);
 
-        // liste des micros (après permission)
         const devices = await navigator.mediaDevices.enumerateDevices();
         micSelect.innerHTML = "";
-        devices
-            .filter(d => d.kind === "audioinput")
-            .forEach((d, i) => {
-                const opt = document.createElement("option");
-                opt.value = d.deviceId;
-                opt.textContent = d.label || `Micro ${i + 1}`;
-                micSelect.appendChild(opt);
-            });
+        devices.filter(d => d.kind === "audioinput").forEach((d, i) => {
+            const opt = document.createElement("option");
+            opt.value = d.deviceId;
+            opt.textContent = d.label || `Micro ${i + 1}`;
+            micSelect.appendChild(opt);
+        });
     }
 
     async function startWebRTC() {
@@ -61,6 +58,7 @@
         const offers = await offersRes.json();
 
         if (!offers || Object.keys(offers).length === 0) {
+            // Host
             const offer = await pc.createOffer();
             await pc.setLocalDescription(offer);
             await fetch("/webrtc/offer", {
@@ -69,21 +67,29 @@
                 body: JSON.stringify(offer)
             });
         } else {
+            // Client
             const hostOffer = Object.values(offers)[0];
             await pc.setRemoteDescription(hostOffer);
 
             const answer = await pc.createAnswer();
             await pc.setLocalDescription(answer);
-
             await fetch("/webrtc/answer", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(answer)
             });
         }
+
+        // Récupération ICE une seule fois
+        setTimeout(async () => {
+            const res = await fetch("/webrtc/candidates");
+            const cands = await res.json();
+            for (const c of cands) {
+                try { await pc.addIceCandidate(c); } catch {}
+            }
+        }, 1500);
     }
 
-    // 🎤 ACTIVER / DÉSACTIVER MICRO
     micBtn.addEventListener("click", async () => {
         if (!localStream) {
             await startMicro();
@@ -91,20 +97,16 @@
             micBtn.textContent = "Désactiver micro";
         } else {
             audioTrack.enabled = !audioTrack.enabled;
-            micBtn.textContent = audioTrack.enabled
-                ? "Désactiver micro"
-                : "Activer micro";
+            micBtn.textContent = audioTrack.enabled ? "Désactiver micro" : "Activer micro";
         }
     });
 
-    // 🔇 MUTE (local seulement)
     muteBtn.addEventListener("click", () => {
         if (!audioTrack) return;
         audioTrack.enabled = !audioTrack.enabled;
         muteBtn.textContent = audioTrack.enabled ? "Mute" : "Unmute";
     });
 
-    // 🎧 CHANGEMENT DE MICRO
     micSelect.addEventListener("change", async () => {
         if (!micSelect.value) return;
         await startMicro(micSelect.value);
