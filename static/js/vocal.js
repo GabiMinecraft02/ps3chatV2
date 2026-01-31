@@ -3,57 +3,71 @@
     const micBtn = document.getElementById("mic-Btn");
     const muteBtn = document.getElementById("mute-btn");
     const localAudio = document.getElementById("localAudio");
-    let localStream;
 
-    if (!micSelect || !micBtn || !muteBtn || !localAudio) return;
+    let localStream = null;
 
-    // Initialisation micro
-    async function initMic() {
+    if (!micSelect || !micBtn || !muteBtn || !localAudio) {
+        console.error("Éléments micro manquants");
+        return;
+    }
+
+    async function startMicro(deviceId = null) {
         try {
-            localStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            console.log("Demande accès micro…");
+
+            const constraints = {
+                audio: deviceId ? { deviceId: { exact: deviceId } } : true
+            };
+
+            localStream = await navigator.mediaDevices.getUserMedia(constraints);
             localAudio.srcObject = localStream;
 
-            // Lister les micros
+            console.log("Micro OK");
+
             const devices = await navigator.mediaDevices.enumerateDevices();
             const mics = devices.filter(d => d.kind === "audioinput");
+
             micSelect.innerHTML = "";
-            mics.forEach((mic, index) => {
-                const option = document.createElement("option");
-                option.value = mic.deviceId;
-                option.textContent = mic.label || `Micro ${index + 1}`;
-                micSelect.appendChild(option);
+            mics.forEach((mic, i) => {
+                const opt = document.createElement("option");
+                opt.value = mic.deviceId;
+                opt.textContent = mic.label || `Micro ${i + 1}`;
+                micSelect.appendChild(opt);
             });
+
         } catch (err) {
-            console.error("Impossible d’accéder au micro :", err);
-            alert("Permission micro refusée ou non disponible");
+            console.error("ERREUR MICRO :", err);
+            alert("Micro refusé ou non disponible");
         }
     }
 
-    // Changer de micro
-    micSelect.addEventListener("change", async () => {
-        if (!micSelect.value) return;
-        const stream = await navigator.mediaDevices.getUserMedia({
-            audio: { deviceId: { exact: micSelect.value } }
-        });
-        localAudio.srcObject = stream;
-        localStream = stream;
+    // 🔘 BOUTON ACTIVER MICRO (OBLIGATOIRE SUR MOBILE)
+    micBtn.addEventListener("click", async () => {
+        if (!localStream) {
+            micBtn.textContent = "Désactiver micro";
+            await startMicro();
+        } else {
+            localStream.getTracks().forEach(t => t.stop());
+            localStream = null;
+            micBtn.textContent = "Activer micro";
+            localAudio.srcObject = null;
+        }
     });
 
-    // Activer / désactiver micro
-    micBtn.addEventListener("click", () => {
+    // 🎤 CHANGEMENT DE MICRO
+    micSelect.addEventListener("change", async () => {
+        if (!micSelect.value) return;
+        if (localStream) {
+            localStream.getTracks().forEach(t => t.stop());
+        }
+        await startMicro(micSelect.value);
+    });
+
+    // 🔇 MUTE
+    muteBtn.addEventListener("click", () => {
         if (!localStream) return;
         const track = localStream.getAudioTracks()[0];
         track.enabled = !track.enabled;
-        micBtn.textContent = track.enabled ? "Désactiver micro" : "Activer micro";
+        muteBtn.textContent = track.enabled ? "Mute" : "Unmute";
     });
-
-    // Mute audio local
-    muteBtn.addEventListener("click", () => {
-        if (!localAudio.srcObject) return;
-        localAudio.muted = !localAudio.muted;
-        muteBtn.textContent = localAudio.muted ? "Unmute" : "Mute";
-    });
-
-    // Lancer l’init
-    initMic();
 })();
