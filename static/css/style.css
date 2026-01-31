@@ -1,0 +1,4 @@
+body { font-family: Arial; background: #222; color: #fff; text-align: center; }
+.login-box { margin: 100px auto; width: 300px; }
+input, button { display: block; margin: 10px auto; padding: 10px; width: 80%; }
+#chat-box { height: 300px; overflow-y: scroll; border: 1px solid #555; padding: 10px; margin: 20px auto; width: 50%; }
