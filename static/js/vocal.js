@@ -1,78 +1,59 @@
 (() => {
-    // --- Variables globales ---
-    const chatBox = document.getElementById("chat-box");
-    const chatForm = document.getElementById("chat-form");
-    const chatInput = document.getElementById("chat-input");
-    const usersList = document.getElementById("users-list");
+    const micSelect = document.getElementById("micSelect");
+    const micBtn = document.getElementById("mic-Btn");
+    const muteBtn = document.getElementById("mute-btn");
+    const localAudio = document.getElementById("localAudio");
+    let localStream;
 
-    // Vérifie que les éléments existent avant de continuer
-    if (!chatBox || !chatForm || !chatInput || !usersList) return;
+    if (!micSelect || !micBtn || !muteBtn || !localAudio) return;
 
-    // --- Fonction pour ajouter un message dans le chat ---
-    function addMessage(username, content) {
-        const div = document.createElement("div");
-        div.textContent = `${username}: ${content}`;
-        chatBox.appendChild(div);
-        chatBox.scrollTop = chatBox.scrollHeight;
-    }
-
-    // --- Envoi de message ---
-    chatForm.addEventListener("submit", async (e) => {
-        e.preventDefault();
-        const content = chatInput.value.trim();
-        if (!content) return;
-
-        // Affiche immédiatement
-        addMessage(USERNAME, content);
-        chatInput.value = "";
-
-        // Envoi au serveur
+    // Initialisation micro
+    async function initMic() {
         try {
-            await fetch("/send_message", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ content })
+            localStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            localAudio.srcObject = localStream;
+
+            // Lister les micros
+            const devices = await navigator.mediaDevices.enumerateDevices();
+            const mics = devices.filter(d => d.kind === "audioinput");
+            micSelect.innerHTML = "";
+            mics.forEach((mic, index) => {
+                const option = document.createElement("option");
+                option.value = mic.deviceId;
+                option.textContent = mic.label || `Micro ${index + 1}`;
+                micSelect.appendChild(option);
             });
         } catch (err) {
-            console.error("Erreur en envoyant le message :", err);
+            console.error("Impossible d’accéder au micro :", err);
+            alert("Permission micro refusée ou non disponible");
         }
+    }
+
+    // Changer de micro
+    micSelect.addEventListener("change", async () => {
+        if (!micSelect.value) return;
+        const stream = await navigator.mediaDevices.getUserMedia({
+            audio: { deviceId: { exact: micSelect.value } }
+        });
+        localAudio.srcObject = stream;
+        localStream = stream;
     });
 
-    // --- Récupération des messages depuis le serveur ---
-    async function fetchMessages() {
-        try {
-            const res = await fetch("/get_messages");
-            if (!res.ok) return;
-            const messages = await res.json();
-            chatBox.innerHTML = "";
-            messages.forEach(msg => addMessage(msg.username, msg.content));
-        } catch (err) {
-            console.error("Erreur en récupérant les messages :", err);
-        }
-    }
+    // Activer / désactiver micro
+    micBtn.addEventListener("click", () => {
+        if (!localStream) return;
+        const track = localStream.getAudioTracks()[0];
+        track.enabled = !track.enabled;
+        micBtn.textContent = track.enabled ? "Désactiver micro" : "Activer micro";
+    });
 
-    // --- Récupération des utilisateurs connectés ---
-    async function fetchUsers() {
-        try {
-            const res = await fetch("/connected_users");
-            if (!res.ok) return;
-            const users = await res.json();
-            usersList.innerHTML = "";
-            users.forEach(u => {
-                const li = document.createElement("li");
-                li.textContent = u;
-                usersList.appendChild(li);
-            });
-        } catch (err) {
-            console.error("Erreur en récupérant les utilisateurs :", err);
-        }
-    }
+    // Mute audio local
+    muteBtn.addEventListener("click", () => {
+        if (!localAudio.srcObject) return;
+        localAudio.muted = !localAudio.muted;
+        muteBtn.textContent = localAudio.muted ? "Unmute" : "Mute";
+    });
 
-    // --- Rafraîchissement régulier ---
-    setInterval(fetchMessages, 500); // messages toutes les 0,5 s
-    setInterval(fetchUsers, 2000);   // utilisateurs toutes les 2 s
-
-    // --- Initialisation ---
-    fetchMessages();
-    fetchUsers();
+    // Lancer l’init
+    initMic();
 })();
