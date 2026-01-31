@@ -6,19 +6,21 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 <body>
-    <h1>Vocal - {{ username }}</h1>
+    <h1>Ps3ChatV2.0 - Vocal</h1>
+    <p>Connecté en tant que : {{ username }} | <a href="/logout">Déconnexion</a></p>
+
+    <!-- Utilisateurs connectés -->
+    <div>
+        <h3>Connectés</h3>
+        <ul id="users-list"></ul>
+    </div>
 
     <!-- Choix du micro -->
     <label for="micSelect">Choisir un micro :</label>
     <select id="micSelect"></select>
-
-    <!-- Audio local -->
+    <button id="mute-btn">Mute</button>
     <audio id="localAudio" autoplay muted></audio>
 
-    <!-- Bouton mute -->
-    <button id="mute-btn">Mute</button>
-
-    <!-- Script pour gérer micro, mute et WebRTC -->
     <script>
         const USERNAME = "{{ username }}";
     </script>
