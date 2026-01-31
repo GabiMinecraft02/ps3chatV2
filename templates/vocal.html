@@ -9,17 +9,27 @@
     <h1>Ps3ChatV2.0 - Vocal</h1>
     <p>Connecté en tant que : {{ username }} | <a href="/logout">Déconnexion</a></p>
 
-    <!-- Utilisateurs connectés -->
-    <div>
-        <h3>Connectés</h3>
-        <ul id="users-list"></ul>
-    </div>
+    <div style="display:flex; gap:10px; align-items:flex-start;">
 
-    <!-- Choix du micro -->
-    <label for="micSelect">Choisir un micro :</label>
-    <select id="micSelect"></select>
-    <button id="mute-btn">Mute</button>
-    <audio id="localAudio" autoplay muted></audio>
+        <!-- Utilisateurs connectés -->
+        <div style="flex:1;">
+            <h3>Connectés</h3>
+            <ul id="users-list" style="margin-top:0;"></ul>
+        </div>
+
+        <!-- Zone micro et audio -->
+        <div style="flex:2; display:flex; flex-direction:column;">
+            <label for="micSelect">Choisir un micro :</label>
+            <select id="micSelect"></select>
+            <div style="margin-top:5px;">
+                <button id="mute-btn">Mute</button>
+                <button id="mic-Btn">Activer / Désactiver micro</button>
+                <a href="/chat"><button>Quitter le vocal</button></a>
+            </div>
+            <audio id="localAudio" autoplay muted style="margin-top:10px;"></audio>
+        </div>
+
+    </div>
 
     <script>
         const USERNAME = "{{ username }}";
