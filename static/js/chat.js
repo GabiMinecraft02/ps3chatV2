@@ -4,7 +4,8 @@ const chatBox = document.getElementById("chat-box");
 
 // Fonction pour récupérer messages
 async function fetchMessages() {
-    const res = await fetch("/get_messages");
+    const res = await fetch("/get_messages"); // pas d'URL complète
+    if (!res.ok) return;
     const messages = await res.json();
     chatBox.innerHTML = "";
     messages.forEach(msg => {
