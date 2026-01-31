@@ -9,10 +9,10 @@
     <h1>Ps3ChatV2.0 - Chat</h1>
     <p>Connecté en tant que : {{ username }} | <a href="/logout">Déconnexion</a></p>
 
-<div style="display:flex; gap:10px; align-items:flex-start;">
+<div style="display:flex; gap:5px; align-items:flex-start;">
 
     <!-- Chat -->
-    <div style="flex:3; display:flex; flex-direction:column;">
+    <div style="flex:4; display:flex; flex-direction:column;">
         <h3>Messages</h3>
         <div id="chat-box" style="flex:1; overflow-y:scroll; border:1px solid #555; padding:10px; min-height:400px;"></div>
         <form id="chat-form" style="margin-top:5px;">
@@ -37,4 +37,5 @@
     <script src="{{ url_for('static', filename='js/chat.js') }}"></script>
 </body>
 </html>
+
 
