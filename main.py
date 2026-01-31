@@ -42,6 +42,14 @@ def vocal():
         return redirect(url_for("login"))
     return render_template("vocal.html", username=session["username"])
 
+@app.route("/get_messages", methods=["GET"])
+def get_messages():
+    if "username" not in session:
+        return jsonify([]), 401
+    messages = supabase.table("messages").select("*").order("created_at").execute().data
+    return jsonify(messages)
+
+
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port, debug=True)
