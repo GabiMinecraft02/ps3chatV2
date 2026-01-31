@@ -1,16 +1,17 @@
 const localAudio = document.getElementById("localAudio");
 const micSelect = document.getElementById("micSelect");
 const muteBtn = document.getElementById("mute-btn");
+const micBtn = document.getElementById("mic-Btn");
 const usersList = document.getElementById("users-list");
+
 let localStream;
 
-// Liste des micros et permission
+// Initialisation micro
 async function initMic() {
     try {
         localStream = await navigator.mediaDevices.getUserMedia({ audio: true });
         localAudio.srcObject = localStream;
 
-        // Après avoir obtenu la permission, lister les micros
         const devices = await navigator.mediaDevices.enumerateDevices();
         const mics = devices.filter(d => d.kind === "audioinput");
         micSelect.innerHTML = "";
@@ -36,7 +37,7 @@ micSelect.addEventListener("change", async () => {
     }
 });
 
-// Bouton mute
+// Mute / unmute
 muteBtn.addEventListener("click", () => {
     if (localStream) {
         const track = localStream.getAudioTracks()[0];
@@ -44,7 +45,7 @@ muteBtn.addEventListener("click", () => {
     }
 });
 
-// Activer / désactiver le micro
+// Activer / Désactiver micro (pour indiquer état sur le bouton)
 micBtn.addEventListener("click", () => {
     if (!localStream) return;
     const track = localStream.getAudioTracks()[0];
@@ -65,8 +66,7 @@ async function fetchUsers() {
     });
 }
 
-// Refresh utilisateurs toutes les 2 secondes
+// Refresh utilisateurs toutes les 2s
 setInterval(fetchUsers, 2000);
 fetchUsers();
 initMic();
-
