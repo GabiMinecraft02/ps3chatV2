@@ -1,4 +1,78 @@
-body { font-family: Arial; background: #222; color: #fff; text-align: center; }
-.login-box { margin: 100px auto; width: 300px; }
-input, button { display: block; margin: 10px auto; padding: 10px; width: 80%; }
-#chat-box { height: 300px; overflow-y: scroll; border: 1px solid #555; padding: 10px; margin: 20px auto; width: 50%; }
+body {
+    font-family: Arial, sans-serif;
+    background: #222;          /* fond global sombre */
+    color: #fff;               /* texte clair par défaut */
+    text-align: center;
+    margin: 0;
+    padding: 0;
+}
+
+/* Boîte de connexion centrée */
+.login-box {
+    margin: 100px auto;
+    width: 300px;
+    background-color: #1c1c1c; /* un peu plus sombre que le body */
+    padding: 30px;
+    border-radius: 12px;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.6);
+}
+
+/* Inputs et boutons */
+input, button {
+    display: block;
+    margin: 10px auto;
+    padding: 10px;
+    width: 80%;
+    border: none;
+    border-radius: 5px;
+}
+
+input {
+    background-color: #333;
+    color: #fff;
+}
+
+button {
+    background-color: #1e90ff;
+    color: #fff;
+    cursor: pointer;
+    transition: background 0.3s;
+}
+
+button:hover {
+    background-color: #0d6efd;
+}
+
+/* Chat-box */
+#chat-box {
+    height: 300px;
+    overflow-y: scroll;
+    border: 1px solid #555;
+    padding: 10px;
+    margin: 20px auto;
+    width: 50%;
+    background-color: #1a1a1a;
+    border-radius: 8px;
+}
+
+/* Section sombre améliorée */
+.section-sombre {
+    background: linear-gradient(145deg, #1e1e1e, #2a2a2a); /* dégradé subtil */
+    color: #ffffff;
+    padding: 40px;
+    border-radius: 10px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.6);
+    max-width: 800px;
+    margin: 40px auto;
+    text-align: left; /* plus lisible pour les sections de texte */
+}
+
+/* Liens dans section sombre */
+.section-sombre a {
+    color: #1e90ff;
+    text-decoration: none;
+}
+
+.section-sombre a:hover {
+    text-decoration: underline;
+}
