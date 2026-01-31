@@ -6,34 +6,37 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 <body>
-    <h1>Ps3ChatV2.0 - Vocal</h1>
-    <p>Connecté en tant que : {{ username }} | <a href="/logout">Déconnexion</a></p>
+<h1>Ps3ChatV2.0 - Vocal</h1>
+<p>Connecté en tant que : {{ username }} | <a href="/logout">Déconnexion</a></p>
 
-    <div style="display:flex; gap:10px; align-items:flex-start;">
+<div class="container">
+    <!-- Utilisateurs connectés -->
+    <section class="users-column">
+        <h3>Connectés</h3>
+        <ul id="users-list"></ul>
+    </section>
 
-        <!-- Utilisateurs connectés -->
-        <div style="flex:1;">
-            <h3>Connectés</h3>
-            <ul id="users-list" style="margin-top:0;"></ul>
+    <!-- Zone micro / audio -->
+    <div class="chat-column">
+        <label for="micSelect">Choisir un micro :</label>
+        <select id="micSelect"></select>
+
+        <div style="margin-top:10px; display:flex; gap:10px;">
+            <button id="mute-btn">Mute</button>
+            <button id="mic-Btn">Activer / Désactiver micro</button>
+            <a href="/chat"><button>Quitter le vocal</button></a>
         </div>
 
-        <!-- Zone micro et audio -->
-        <div style="flex:2; display:flex; flex-direction:column;">
-            <label for="micSelect">Choisir un micro :</label>
-            <select id="micSelect"></select>
-            <div style="margin-top:5px;">
-                <button id="mute-btn">Mute</button>
-                <button id="mic-Btn">Activer / Désactiver micro</button>
-                <a href="/chat"><button>Quitter le vocal</button></a>
-            </div>
-            <audio id="localAudio" autoplay muted style="margin-top:10px;"></audio>
-        </div>
-
+        <h3>Flux audio des autres</h3>
+        <div id="peers"></div>
+        <audio id="localAudio" autoplay muted style="margin-top:10px;"></audio>
     </div>
+</div>
 
-    <script>
-        const USERNAME = "{{ username }}";
-    </script>
-    <script src="{{ url_for('static', filename='js/vocal.js') }}"></script>
+<script>
+    const USERNAME = "{{ username }}";
+</script>
+<script src="https://unpkg.com/simple-peer/simplepeer.min.js"></script>
+<script src="{{ url_for('static', filename='js/vocal.js') }}"></script>
 </body>
 </html>
