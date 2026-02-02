@@ -150,9 +150,9 @@
     micBtn.addEventListener("click", async () => {
         if (!localStream) {
             await startMicro();
-            await createPeer();
-            await sendOffer();
-            pollSignals();
+            await initMicSelect();
+            await connectToPeers();
+            pollCandidates();
             micBtn.textContent = "Désactiver micro";
         } else {
             const track = localStream.getAudioTracks()[0];
@@ -172,4 +172,5 @@
         await startMicro(micSelect.value);
     });
 })();
+
 
