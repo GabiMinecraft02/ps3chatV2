@@ -1,11 +1,11 @@
-// vocal.js
 (() => {
     const micBtn = document.getElementById("mic-Btn");
     const muteBtn = document.getElementById("mute-btn");
     const micSelect = document.getElementById("micSelect");
-    const peers = {}; // username => RTCPeerConnection
 
+    const peers = {};
     let localStream = null;
+    let pc = null;
 
     async function startMicro(deviceId = null) {
         if (localStream) localStream.getTracks().forEach(t => t.stop());
@@ -23,66 +23,95 @@
         });
     }
 
-    async function connectToPeers() {
-        const res = await fetch("/webrtc/offers");
-        const offers = await res.json();
+    async function createPeer() {
+        pc = new RTCPeerConnection({
+            iceServers: [{ urls: "stun:stun.l.google.com:19302" }]
+        });
 
-        for (const [username, offer] of Object.entries(offers)) {
-            if (username === USERNAME) continue;
+        localStream.getTracks().forEach(t => pc.addTrack(t, localStream));
 
-            const pc = new RTCPeerConnection({ iceServers: [{ urls: "stun:stun.l.google.com:19302" }] });
-            peers[username] = pc;
+        pc.ontrack = e => {
+            let audio = document.getElementById("remoteAudio");
+            if (!audio) {
+                audio = document.createElement("audio");
+                audio.id = "remoteAudio";
+                audio.autoplay = true;
+                document.body.appendChild(audio);
+            }
+            audio.srcObject = e.streams[0];
+        };
 
-            localStream.getTracks().forEach(track => pc.addTrack(track, localStream));
-
-            pc.ontrack = e => {
-                let audio = document.getElementById(`audio-${username}`);
-                if (!audio) {
-                    audio = document.createElement("audio");
-                    audio.id = `audio-${username}`;
-                    audio.autoplay = true;
-                    document.body.appendChild(audio);
-                }
-                audio.srcObject = e.streams[0];
-            };
-
-            pc.onicecandidate = e => {
-                if (e.candidate) fetch("/webrtc/candidate", {
+        pc.onicecandidate = e => {
+            if (e.candidate) {
+                fetch("/webrtc/send", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ to: username, candidate: e.candidate })
+                    body: JSON.stringify({
+                        to: "all",
+                        type: "candidate",
+                        payload: e.candidate
+                    })
                 });
-            };
-
-            await pc.setRemoteDescription(offer);
-            const answer = await pc.createAnswer();
-            await pc.setLocalDescription(answer);
-
-            await fetch("/webrtc/answer", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ to: username, answer })
-            });
-        }
+            }
+        };
     }
 
-    async function pollCandidates() {
-        const res = await fetch("/webrtc/candidates");
-        const cands = await res.json();
-        for (const c of cands) {
-            const pc = peers[c.to];
-            if (pc) {
-                try { await pc.addIceCandidate(c.candidate); } catch {}
+    async function sendOffer() {
+        const offer = await pc.createOffer();
+        await pc.setLocalDescription(offer);
+
+        await fetch("/webrtc/send", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                to: "all",
+                type: "offer",
+                payload: offer
+            })
+        });
+    }
+
+    async function pollSignals() {
+        const res = await fetch("/webrtc/poll");
+        const signals = await res.json();
+
+        for (const s of signals) {
+            if (s.type === "offer") {
+                await pc.setRemoteDescription(s.payload);
+                const answer = await pc.createAnswer();
+                await pc.setLocalDescription(answer);
+
+                await fetch("/webrtc/send", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        to: s.from_user,
+                        type: "answer",
+                        payload: answer
+                    })
+                });
+            }
+
+            if (s.type === "answer") {
+                await pc.setRemoteDescription(s.payload);
+            }
+
+            if (s.type === "candidate") {
+                try {
+                    await pc.addIceCandidate(s.payload);
+                } catch {}
             }
         }
-        setTimeout(pollCandidates, 1000);
+
+        setTimeout(pollSignals, 1500);
     }
 
     micBtn.addEventListener("click", async () => {
         if (!localStream) {
             await startMicro();
-            await connectToPeers();
-            pollCandidates();
+            await createPeer();
+            await sendOffer();
+            pollSignals();
             micBtn.textContent = "Désactiver micro";
         } else {
             const track = localStream.getAudioTracks()[0];
@@ -99,7 +128,6 @@
     });
 
     micSelect.addEventListener("change", async () => {
-        if (!micSelect.value) return;
         await startMicro(micSelect.value);
     });
 })();
