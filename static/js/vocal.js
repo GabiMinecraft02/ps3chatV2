@@ -23,6 +23,47 @@
         });
     }
 
+    async function initMicSelect() {
+    const devices = await navigator.mediaDevices.enumerateDevices();
+    micSelect.innerHTML = "";
+
+    devices
+        .filter(d => d.kind === "audioinput")
+        .forEach((device, index) => {
+            const option = document.createElement("option");
+            option.value = device.deviceId;
+            option.textContent = device.label || `Micro ${index + 1}`;
+            micSelect.appendChild(option);
+        });
+    }
+
+    async function changeMicro(deviceId) {
+    if (!deviceId) return;
+
+    // Nouveau flux audio
+    const newStream = await navigator.mediaDevices.getUserMedia({
+        audio: { deviceId: { exact: deviceId } }
+    });
+
+    const newTrack = newStream.getAudioTracks()[0];
+
+    // Stop ancien micro
+    if (localStream) {
+        localStream.getTracks().forEach(t => t.stop());
+    }
+
+    localStream = newStream;
+
+    // Remplacer la piste audio pour chaque peer
+    Object.values(peers).forEach(pc => {
+        const sender = pc.getSenders().find(s => s.track && s.track.kind === "audio");
+        if (sender) {
+            sender.replaceTrack(newTrack);
+        }
+        });
+    }
+
+
     async function createPeer() {
         pc = new RTCPeerConnection({
             iceServers: [{ urls: "stun:stun.l.google.com:19302" }]
@@ -131,3 +172,4 @@
         await startMicro(micSelect.value);
     });
 })();
+
